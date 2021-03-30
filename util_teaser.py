@@ -24,7 +24,7 @@ def transform_from_solution(solution):
     T = np.identity(4)
     T[:3,:3] = solution.rotation
     T[:3,3] = solution.translation
- 
+    
     return T, solution.scale
 
 def get_default_solver(noise_bound, estimate_scale = False):

@@ -84,7 +84,7 @@ if __name__ == "__main__":
     
     i_cloud.paint_uniform_color([0,0,1])
     o_cloud.paint_uniform_color([1,0,0])
-    o3d.visualization.draw_geometries([i_cloud, o_cloud])
+    # o3d.visualization.draw_geometries([i_cloud, o_cloud])
     
     o3d.io.write_point_cloud(args.output, o_cloud)
     np.savetxt(os.path.join(os.path.dirname(output_cloud), "ground_truth_transform.txt"), transf)
