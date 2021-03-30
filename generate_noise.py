@@ -65,11 +65,11 @@ if __name__ == "__main__":
     points = np.asarray(o_cloud.points)
 
     if args.scale:
-        scale = max(0.3, 3*np.random.random())
-        points *= scale
-
+        # scale = max(0.3, 3*np.random.random())
+        points *= float(args.scale)
+        transf[3,3] = float(args.scale)
     if args.partial_overlap:
-        points = incomplete_scan(points, points.shape[0], p)
+        points = incomplete_scan(points, points.shape[0], float(args.partial_overlap))
 
     if args.noise:
         noise = generate_noise(float(args.noise), points.shape[0])
