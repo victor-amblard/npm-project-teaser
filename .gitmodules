@@ -1,0 +1,6 @@
+[submodule "FCGF"]
+	path = FCGF
+	url = git@github.com:chrischoy/FCGF.git
+[submodule "TEASER-plusplus"]
+	path = TEASER-plusplus
+	url = git@github.com:victor-amblard/TEASER-plusplus.git
