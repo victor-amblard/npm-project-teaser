@@ -6,8 +6,8 @@ import numpy as np
 import time 
 from open3d.open3d.geometry import voxel_down_sample, estimate_normals
 import subprocess
-from util_features import compute_fpfh_correspondences
-from util_teaser import get_default_solver, transform_from_solution, get_angular_error, print_error
+from util.util_features import compute_fpfh_correspondences
+from util.util_teaser import get_default_solver, transform_from_solution, get_angular_error, print_error
 import generate_noise
 
 
@@ -40,11 +40,11 @@ for i in range(N_MC):
 
     T_gt, scale_gt = get_gt_transform(transformed_cloud_path)
 
-    all_voxel_sizes = [0.025, 0.05, 0.075,0.1]
+    all_voxel_sizes = [0.01, 0.025, 0.05, 0.075,0.1]
 
     for j in range(N_VOXELS):
         voxel_size = all_voxel_sizes[j]  
-        noise_bound = voxel_size
+        noise_bound = 3*voxel_size
 
         default_cloud = read_downsample(default_cloud_path, voxel_size)
         transformed_cloud = read_downsample(transformed_cloud_path, voxel_size)

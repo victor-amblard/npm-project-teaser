@@ -8,10 +8,11 @@ from open3d.open3d.geometry import voxel_down_sample, estimate_normals
 from sklearn.model_selection import ParameterGrid
 from tqdm import tqdm 
 import subprocess
-from util_features import compute_fpfh_correspondences, extract_fpfh
-from util_teaser import get_default_solver, transform_from_solution, get_angular_error, print_error
+
+from util.util_features import compute_fpfh_correspondences, extract_fpfh
+from util.util_teaser import get_default_solver, transform_from_solution, get_angular_error, print_error
 import generate_noise
-from util_ransac import ransac_registration
+from util.util_ransac import ransac_registration
 
 def read_downsample(path, voxel_size):
     cloud = o3d.io.read_point_cloud(path)
