@@ -114,7 +114,8 @@ if __name__ == "__main__":
     idx = 0
     idx_max = all_files.index("cloud_1583840499_935335936.pcd") # Last point cloud for this experiment 
     
-    i = 0
+    i = 1
+    mat = np.array([-0.70992163, -0.02460003, -0.70385092, -0.04874569, 0.70414167, -0.00493623, -0.71004236, -0.05289342,  0.01399269, -0.99968519,  0.02082624, -0.04699275,  0.        ,  0.        ,  0.,  1.]).reshape(4,4)
 
     while True:
         print("Now processing "+all_files[idx])
@@ -134,7 +135,7 @@ if __name__ == "__main__":
         # certify_solution(teaser_solver, solution.rotation, NOISE_BOUND)
         # visualization(prev_cloud, cur_cloud, icp_transf)
 
-        positions[i] = icp_transf @ positions[i-1]
+        positions[i] =  icp_transf @positions[i-1]
         prev_cloud = cur_cloud
         prev_cloud_npy = cur_cloud_npy.copy()
         prev_feats = cur_feats.copy()
@@ -147,7 +148,7 @@ if __name__ == "__main__":
             break 
         
         i += 1
-
+    
     pcloud = o3d.geometry.PointCloud()
     pcloud.points = o3d.utility.Vector3dVector(positions[:,:3])
     gt_seq = o3d.io.read_point_cloud("/home/victor/Data/Stages/MIT/newer_college_dataset/seq4/gt_seq4.pcd")
@@ -156,5 +157,6 @@ if __name__ == "__main__":
     gt_seq.points = o3d.utility.Vector3dVector(new_pts / NORMALIZATION_FACTOR)    
     gt_seq.paint_uniform_color([0,0,1])
     pcloud.paint_uniform_color([0,1,0])
-
+    print(np.asarray(pcloud.points))
+    print(np.asarray(gt_seq.points))
     o3d.visualization.draw_geometries([pcloud, gt_seq])

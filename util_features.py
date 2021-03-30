@@ -11,7 +11,7 @@ def extract_fpfh(pcd, voxel_size):
   radius_feature = voxel_size * 5
   fpfh = o3d.registration.compute_fpfh_feature(
       pcd, o3d.geometry.KDTreeSearchParamHybrid(radius=radius_feature, max_nn=100))
-  return np.array(fpfh.data).T
+  return np.array(fpfh.data).T, fpfh
 
 def find_knn_cpu(feat0, feat1, knn=1, return_distance=False):
   feat1tree = cKDTree(feat1)
@@ -42,8 +42,8 @@ def find_correspondences(feats0, feats1, mutual_filter=True):
 
 def compute_fpfh_correspondences(cloud_a, cloud_b, voxel_size):
     print("Computing correspondences (FPFH)...")
-    feats_a = extract_fpfh(cloud_a, voxel_size)
-    feats_b =  extract_fpfh(cloud_b, voxel_size)
+    feats_a, _ = extract_fpfh(cloud_a, voxel_size)
+    feats_b, _ =  extract_fpfh(cloud_b, voxel_size)
     corr_a, corr_b = find_correspondences(feats_a, feats_b)
     print("Found {} correspondences".format(feats_a.shape[0]))
     points_a = np.asarray(cloud_a.points).T

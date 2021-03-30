@@ -7,28 +7,9 @@ import time
 from open3d.open3d.geometry import voxel_down_sample, estimate_normals
 import subprocess
 from util_features import compute_fpfh_correspondences
-from util_teaser import get_default_solver, transform_from_solution, get_angular_error
+from util_teaser import get_default_solver, transform_from_solution, get_angular_error, print_error
 import generate_noise
 
-def print_error(est_transf_se3, gt_transf_se3, est_scale=None, gt_scale = None):
-    
-    R_gt = gt_transf_se3[:3,:3]
-    R_est = est_transf_se3[:3,:3]
-    rot_err = get_angular_error(R_gt, R_est)
-
-    t_gt = gt_transf_se3[:,-1]
-    t_est = est_transf_se3[:,-1]
-    tr_err = np.linalg.norm(t_gt - t_est)
-
-    print("Translation error: {:.3f}m, Rotation error: {:.2f}deg".format(tr_err, rot_err))
-    if est_scale is not None:
-        scale_err = abs(est_scale - gt_scale) / gt_scale
-        print(scale)
-        print(gt_scale)
-        print("Scale error: {:.3f}%".format(scale_err*100))
-        return rot_err, tr_err, scale_err
-    
-    return rot_err, tr_err
 
 def read_downsample(path, voxel_size):
     cloud = o3d.io.read_point_cloud(path)
@@ -43,7 +24,7 @@ def get_gt_transform(path):
     T[3,3] = 1
     return np.linalg.inv(T), 1/scale
 
-VISUALIZATION = False
+VISUALIZATION = True
 
 default_cloud_path = './data/model_bunny.ply'
 
@@ -59,7 +40,7 @@ for i in range(N_MC):
 
     T_gt, scale_gt = get_gt_transform(transformed_cloud_path)
 
-    all_voxel_sizes = [0.01, 0.025, 0.05,0.075]
+    all_voxel_sizes = [0.025, 0.05, 0.075,0.1]
 
     for j in range(N_VOXELS):
         voxel_size = all_voxel_sizes[j]  
@@ -69,6 +50,8 @@ for i in range(N_MC):
         transformed_cloud = read_downsample(transformed_cloud_path, voxel_size)
         
         if VISUALIZATION:
+            transformed_cloud.paint_uniform_color([1,0,0])
+            default_cloud.paint_uniform_color([0,0,1])
             o3d.visualization.draw_geometries([default_cloud, transformed_cloud])
         corr_a, corr_b = compute_fpfh_correspondences(default_cloud, transformed_cloud, voxel_size)
 
@@ -89,8 +72,8 @@ for i in range(N_MC):
             cloud_copy = copy.deepcopy(transformed_cloud)
             cloud_copy.points = o3d.utility.Vector3dVector(np.asarray(transformed_cloud.points) * scale)
             cloud_copy.transform(T)
-            cloud_copy.paint_uniform_color([0,0,1])
-            default_cloud.paint_uniform_color([0,1,0])
+            cloud_copy.paint_uniform_color([1,0,0])
+            default_cloud.paint_uniform_color([0,0,1])
             o3d.visualization.draw_geometries([default_cloud, cloud_copy])
 
 print(results)
