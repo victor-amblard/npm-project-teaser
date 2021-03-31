@@ -8,16 +8,16 @@ from datetime import datetime
 from open3d.open3d.geometry import voxel_down_sample, estimate_normals
 
 from util.util_features import find_correspondences, extract_fpfh
-from util.util_teaser import get_default_solver, transform_from_solution, certify_solution
-import util.util_kitti 
+from util.util_teaser import get_default_solver, transform_from_solution, certify_solution, get_angular_error
+import util.util_kitti as kitti_toolbox
 import matplotlib.pyplot as plt
 
 import teaserpp_python
 
 
-VOXEL_SIZE = 0.025
-NOISE_BOUND = 0.01#VOXEL_SIZE
-NORMALIZATION_FACTOR = 150.
+VOXEL_SIZE = 0.012 
+NOISE_BOUND = VOXEL_SIZE
+NORMALIZATION_FACTOR = 150. #To fit inside a [0,1] box
 
 
 
@@ -124,17 +124,17 @@ def get_closest_cloud(now, ptr, timestamps):
         return ptr - 1, True
 
 def load_gt_imu_frame(kitti_base_dir, all_files):
-    ground_truth_poses = util_kitti.load_oxts_packets_and_poses([os.path.join(os.path.dirname(kitti_base_dir), "../../oxts/data/", os.path.splitext(all_files[i])[0]+".txt")
+    ground_truth_poses = kitti_toolbox.load_oxts_packets_and_poses([os.path.join(os.path.dirname(kitti_base_dir), "../../oxts/data/", os.path.splitext(all_files[i])[0]+".txt")
                                                                 for i in range(len(all_files))])
-    T_lid_imu = util_kitti._load_calib_lidar(os.path.join(os.path.dirname(kitti_base_dir), "../../calib/"))
+    T_lid_imu = kitti_toolbox._load_calib_lidar(os.path.join(os.path.dirname(kitti_base_dir), "../../calib/"))
     
     ground_truth_poses_lidar = np.zeros((len(ground_truth_poses), 4,4))
     pts = np.zeros((len(ground_truth_poses), 3))
 
     for i in range(len(ground_truth_poses)):
-        ground_truth_poses_lidar[i] = T_lid_imu @ np.linalg.inv(ground_truth_poses[0]) @ ground_truth_poses[i]
+        ground_truth_poses_lidar[i] = np.linalg.inv(T_lid_imu) @ np.linalg.inv(ground_truth_poses[0]) @ ground_truth_poses[i]
         pts[i] = (ground_truth_poses_lidar[i] @ np.array([0,0,0,1]))[:3]
-    
+
     plt.plot(pts[:,0], pts[:,1])
     plt.title("Kitti sequence")
     plt.show()
@@ -157,8 +157,7 @@ if __name__ == "__main__":
     prev_feats,_  = extract_fpfh(prev_cloud,VOXEL_SIZE)
     
     initial_transform = np.eye(4)
-    origin = np.zeros(4)
-    origin[-1] = 1
+    origin = np.zeros(3)
 
     positions = []
     positions.append(origin)
@@ -167,9 +166,10 @@ if __name__ == "__main__":
     start = datetime.now()
 
     idx = 0
-    idx_max = 500#len(all_files)
+    idx_max = 800#len(all_files)
     i = 1
     cur_pose = np.eye(4)
+    all_rotation_errors = []
 
     while True:
         print("Now processing "+all_files[idx])
@@ -187,14 +187,19 @@ if __name__ == "__main__":
         transformation, scale = transform_from_solution(solution)
         icp_transf = icp(prev_cloud, cur_cloud, transformation)
             
-        cur_pose = icp_transf @ cur_pose
-        print(cur_pose)
+        new_tf = np.linalg.inv(icp_transf)
+        new_tf[:3, 3] =  new_tf[:3,3] *NORMALIZATION_FACTOR 
+        cur_pose = new_tf @ cur_pose
+        all_rotation_errors.append(get_angular_error(cur_pose[:3, :3], gt_poses[idx,:3,:3]))
+        print("Rotation error: {:.2f}".format(all_rotation_errors[-1]))
         print(gt_poses[idx])
+        print(new_tf)
         print("---")
         # certify_solution(teaser_solver, solution.rotation, NOISE_BOUND)
         # visualization(prev_cloud, cur_cloud, icp_transf)
-
-        positions.append(icp_transf @positions[-1])
+        new_tf = np.linalg.inv(icp_transf)
+        # new_tf[:3, :3] /= NORMALIZATION_FACTOR
+        positions.append(cur_pose[:3,:3] @ positions[0] +  cur_pose[:3,3])
         prev_cloud = cur_cloud
         prev_cloud_npy = cur_cloud_npy.copy()
         prev_feats = cur_feats.copy()
@@ -208,9 +213,15 @@ if __name__ == "__main__":
         
         i += 1
 
+    plt.plot(range(len(all_rotation_errors)), all_rotation_errors)
+    plt.title("Rotation error (degrees)")
+    plt.show()
     positions = np.array(positions)
-    plt.plot(positions[:,0], positions[:,1])
-    # plt.plot(gt_pts[:,0], gt_pts[:,1])
+    plt.plot(positions[:,0], positions[:,1], label="LIDAR odometry")
+    plt.scatter(positions[:,0], positions[:,1], s=1, c='red')
+    plt.plot(gt_pts[:idx_max,0], gt_pts[:idx_max,1], label="Ground truth")
+    plt.scatter(gt_pts[:idx_max,0], gt_pts[:idx_max,1], s=1)
+    plt.legend()
     plt.show()
     pcloud = o3d.geometry.PointCloud()
     pcloud.points = o3d.utility.Vector3dVector(positions[:,:3] * NORMALIZATION_FACTOR)
