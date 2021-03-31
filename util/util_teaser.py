@@ -88,21 +88,17 @@ def certify_solution(solver, R, noise_bound):
     '''
 
     tims_a = solver.getMaxCliqueSrcTIMs()
-    for i in range(tims_a.shape[1]):
-        tims_a[:,i ]= tims_a[:,i] / np.linalg.norm(tims_a[:,i])
-    
     tims_b = solver.getMaxCliqueDstTIMs()
-    for i in range(tims_b.shape[1]):
-        tims_b[:,i]= tims_b[:,i] / np.linalg.norm(tims_b[:,i])
 
     outp = solver.getRotationInliersMask().astype(int)
     N = outp.shape[0]
+    print("TIMS: {}".format(np.sum(outp)))
     theta = -1.0 * np.ones(N)
     theta[outp] = 1.0 
 
     certifier_params = teaserpp_python.DRSCertifier.Params()
     certifier_params.cbar2 = 1.0
-    certifier_params.noise_bound = 2*noise_bound 
+    certifier_params.noise_bound = 2 * noise_bound 
     certifier_params.sub_optimality = 1e-3
     certifier_params.max_iterations = 1e2
     certifier_params.gamma_tau = 1.8

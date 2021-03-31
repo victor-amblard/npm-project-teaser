@@ -10,8 +10,9 @@ import MinkowskiEngine as ME
 from open3d.open3d.geometry import voxel_down_sample, estimate_normals
 import torch
 
-from util_features import find_correspondences, extract_fpfh
-from util_teaser import get_default_solver, transform_from_solution, certify_solution, print_error, visualize, NormalizeCloud
+from util.util_features import find_correspondences, extract_fpfh
+from util.util_teaser import get_default_solver, transform_from_solution, certify_solution, print_error, visualize, NormalizeCloud
+from util.util_ransac import ransac_registration
 # TEASER++ import 
 import teaserpp_python
 # FCGF import
@@ -102,14 +103,14 @@ def find_mutually_nn_keypoints(ref_key, test_key, ref, test):
     return ref_match_idx, ref_NN_idx[ref_match_idx]
 
 def teaser_registration(corr_a, corr_b, voxel_size): 
-    solver = get_default_solver(3*voxel_size)
+    solver = get_default_solver(voxel_size)
     solver.solve(corr_a, corr_b)
     solution = solver.getSolution()
     T, _ = transform_from_solution(solution)
-    # cert = certify_solution(solver, solution.rotation, 3*voxel_size)
+    # cert = certify_solution(solver, solution.rotation, voxel_size)
 
     return T,None# cert 
-    
+
 def test_reconstruction(all_filenames, voxel_size): 
     start = time.time()
     fn_start = all_filenames[0]
@@ -142,11 +143,11 @@ def test_reconstruction(all_filenames, voxel_size):
     o3d.io.write_point_cloud('./data/kitchen_reconstruction.ply', pcd_a)
     
 if __name__ == "__main__":
-    voxel_size = 0.04
+    voxel_size = 0.1
 
 
     # Surface reconstruction POC
-    # test_reconstruction(["/home/victor/Data/3DMatch/kitchen/cloud_bin_{}.ply".format(i) for i in range(15)], voxel_size)
+    test_reconstruction(["/home/victor/Data/3DMatch/kitchen/cloud_bin_{}.ply".format(i) for i in range(15)], voxel_size)
 
     fn_a = "/home/victor/Data/3DMatch/kitchen/cloud_bin_0.ply"
     fn_b = "/home/victor/Data/3DMatch/kitchen/cloud_bin_2.ply"

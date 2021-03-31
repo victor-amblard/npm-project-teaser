@@ -21,6 +21,10 @@ def read_downsample(path, voxel_size):
     return cloud 
 
 def get_gt_transform(path):
+    '''
+        Reads a ground truth transformation (SE(3) + scale) saved by generate_noise.py
+        Returns a numpy array corresponding to that transformation + scale
+    '''
     fn = os.path.join(os.path.dirname(path),"ground_truth_transform.txt")
     T = np.loadtxt(fn)
     scale = T[3,3]
@@ -28,17 +32,17 @@ def get_gt_transform(path):
     return np.linalg.inv(T), 1/scale
 
 VISUALIZATION = False
-
 default_cloud_path = './data/model_bunny.ply'
 
-N_MC = 5
-
+N_MC = 5 #Number of Monte Carlo runs
+N_ALGOS = 2 # RANSAC + TEASER++
 voxel_size = 0.05
 
 param_grid = {'noise': [0.01, 0.02, 0.03], 'outliers' : [ 0.1, 0.25, 0.5, 0.75]}
 grid = ParameterGrid(param_grid)
-print(list(grid))
-results = np.zeros((2, len(list(grid)), N_MC,4))
+N_PARAMS = len(list(grid))
+
+results = np.zeros((N_ALGOS, N_PARAMS, N_MC,4)) # 4 = rot_err + tr_err + sc_err + runtime 
 
 for ii, elem in tqdm(enumerate(list(grid))):
     print()
@@ -80,6 +84,7 @@ for ii, elem in tqdm(enumerate(list(grid))):
         solution = teaser_solver.getSolution()
         end = time.time()
         T, scale = transform_from_solution(solution)
+        
         rot_err, tr_err =  print_error(T, T_gt)
         # Save results
         results[0,ii, j, 0] = rot_err
