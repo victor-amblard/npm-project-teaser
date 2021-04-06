@@ -4,7 +4,7 @@ import copy
 import os 
 import numpy as np
 import time 
-from open3d.open3d.geometry import voxel_down_sample, estimate_normals
+# from open3d.open3d.geometry import voxel_down_sample, estimate_normals
 import subprocess
 from util.util_features import compute_fpfh_correspondences
 from util.util_teaser import get_default_solver, transform_from_solution, get_angular_error, print_error, certify_solution
@@ -13,7 +13,7 @@ import generate_noise
 
 def read_downsample(path, voxel_size):
     cloud = o3d.io.read_point_cloud(path)
-    cloud = voxel_down_sample(cloud, voxel_size)
+    cloud = cloud.voxel_down_sample(voxel_size)
 
     return cloud 
 

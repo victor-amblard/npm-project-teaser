@@ -1,12 +1,10 @@
 from scipy.spatial import cKDTree
-from open3d.open3d.geometry import voxel_down_sample, estimate_normals
 import numpy as np
 import open3d as o3d 
 
 def extract_fpfh(pcd, voxel_size):
   radius_normal = voxel_size * 2
-  estimate_normals(pcd,
-      o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30))
+  pcd.estimate_normals(o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30))
 
   radius_feature = voxel_size * 5
   fpfh = o3d.registration.compute_fpfh_feature(

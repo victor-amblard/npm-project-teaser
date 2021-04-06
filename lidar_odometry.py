@@ -5,7 +5,7 @@ import open3d as o3d
 import numpy as np 
 import copy 
 from datetime import datetime
-from open3d.open3d.geometry import voxel_down_sample, estimate_normals
+# from open3d.open3d.geometry import voxel_down_sample
 
 from util.util_features import find_correspondences, extract_fpfh
 from util.util_teaser import get_default_solver, transform_from_solution, certify_solution, get_angular_error
@@ -35,7 +35,7 @@ def read_kitti(folder, filename):
     
     cloud_ply = o3d.geometry.PointCloud()
     cloud_ply.points = o3d.utility.Vector3dVector(np.asarray(cloud_ply_points) / NORMALIZATION_FACTOR)
-    cloud_ply = voxel_down_sample(cloud_ply, VOXEL_SIZE)
+    cloud_ply = cloud_ply.voxel_down_sample(VOXEL_SIZE)
     cloud = np.asarray(cloud_ply.points) 
 
     return cloud_ply, cloud
