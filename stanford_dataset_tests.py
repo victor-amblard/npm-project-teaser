@@ -1,10 +1,9 @@
-
 import open3d as o3d
 import copy 
 import os 
 import numpy as np
 import time 
-from open3d.open3d.geometry import voxel_down_sample, estimate_normals
+# from open3d.open3d.geometry import voxel_down_sample, estimate_normals
 from sklearn.model_selection import ParameterGrid
 from tqdm import tqdm 
 import subprocess
@@ -16,7 +15,7 @@ from util.util_ransac import ransac_registration
 
 def read_downsample(path, voxel_size):
     cloud = o3d.io.read_point_cloud(path)
-    cloud = voxel_down_sample(cloud, voxel_size)
+    cloud = cloud.voxel_down_sample(voxel_size)
 
     return cloud 
 
